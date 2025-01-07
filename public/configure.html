@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming Catalog Providers - Stremio Addon Configuration</title>
+    <link rel="shortcut icon" href="https://your-icon-url.com/favicon.ico" type="image/x-icon" />
+    <link href="https://fonts.googleapis.com/css2?family=Helvetica:wght@400;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Helvetica', sans-serif;
+        line-height: 1.6;
+        background: #f0f0f5;
+        color: #333;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        text-align: center;
+        transition: background 0.3s, color 0.3s;
+      }
+
+      #addon {
+        position: relative;
+        width: 90%;
+        max-width: none;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        margin: 0 auto;
+      }
+
+      .theme-toggle {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color 0.3s;
+        z-index: 10;
+      }
+
+      body.dark-mode {
+        background: #333;
+        color: #f0f0f5;
+      }
+
+      body.dark-mode #addon {
+        background: #444;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      }
+
+      body.dark-mode .provider {
+        background: #555;
+        border-color: #666;
+      }
+
+      body.dark-mode .provider:hover {
+        border-color: #f0f0f5;
+        box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+      }
+
+      body.dark-mode .link-display {
+        background: #666;
+        border: 1px solid #777;
+      }
+
+      body.dark-mode .name {
+        color: #f0f0f5;
+      }
+
+      body.dark-mode .version {
+        color: #aaa;
+      }
+
+      body.dark-mode .description {
+        color: #ccc;
+      }
+
+      body.dark-mode .form-element label {
+        color: #f0f0f5;
+      }
+
+      body.dark-mode .form-element input {
+        background: #555;
+        color: #f0f0f5;
+        border: 1px solid #666;
+      }
+
+      body.dark-mode .form-element input::placeholder {
+        color: #bbb;
+      }
+
+      body.dark-mode .providers-title,
+      body.dark-mode .selected-providers-title {
+        color: #f0f0f5;
+      }
+
+      .providers-title,
+      .selected-providers-title {
+        font-size: 1.5rem;
+        color: #333;
+        margin-bottom: 15px;
+        font-weight: 600;
+        text-align: left;
+      }
+
+      body.dark-mode .providers-title,
+      body.dark-mode .selected-providers-title {
+        color: #f0f0f5;
+      }
+
+      body.dark-mode .modal {
+        background-color: #333;
+        color: #f0f0f5;
+        border: 1px solid #444;
+      }
+
+      body.dark-mode .modal-close {
+        color: #f0f0f5;
+      }
+
+      body.dark-mode .modal h4 {
+        color: #f0f0f5;
+      }
+
+      body.dark-mode .modal p,
+      body.dark-mode .modal ul {
+        color: #ccc;
+      }
+
+      body.dark-mode .modal ul li {
+        color: #ccc;
+      }
+
+      body.dark-mode .form-element label {
+        color: #e0e0e0;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+      }
+
+      body.dark-mode .form-element .info-icon {
+        color: #fff;
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        text-align: center;
+        line-height: 24px;
+        margin-left: 8px;
+        cursor: help;
+      }
+
+      body.dark-mode select {
+        background-color: #555;
+        color: #f0f0f5;
+        border: 1px solid #666;
+        border-radius: 8px;
+        width: 100%;
+      }
+
+      body.dark-mode select option {
+        background-color: #666;
+        color: #e0e0e0;
+      }
+
+      .logo {
+        margin-bottom: 20px;
+      }
+
+      .logo img {
+        max-width: 120px;
+        height: auto;
+      }
+
+      .name {
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .version {
+        font-size: 1.2rem;
+        color: #888;
+      }
+
+      .description {
+        font-size: 1rem;
+        color: #555;
+        margin-bottom: 20px;
+      }
+
+      .separator {
+        border-top: 1px solid #e0e0e0;
+        margin: 20px 0;
+      }
+
+      .provider-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+      }
+
+      .provider,
+      .selected-provider {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        border: 2px solid #ccc;
+        overflow: hidden;
+        position: relative;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+
+      .provider img,
+      .selected-provider img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: filter 0.3s;
+      }
+
+      .provider:hover,
+      .selected-provider:hover {
+        border-color: #333;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .remove-button {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: #d90f0f;
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 20px;
+        padding: 0;
+        z-index: 1;
+      }
+
+      .remove-button:hover {
+        background: #a70202;
+      }
+
+      .pure-form {
+        margin-top: 20px;
+      }
+
+      .form-element {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+
+      .form-element label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+      }
+
+      .form-element input,
+      .form-element select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+        color: #333;
+      }
+
+      .button-container {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        color: #fff;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+      }
+
+      #connectTraktButton {
+        background-color: #e9e9ed;
+        color: #333;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+        border-radius: 8px;
+      }
+
+      #connectTraktButton:hover {
+        background-color: #d3d3d3;
+        color: #333;
+      }
+
+      .trakt-logo {
+        width: 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        vertical-align: middle;
+      }
+
+      #connectTraktButton span {
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 768px) {
+        #connectTraktButton {
+          margin: 0 auto;
+          display: flex; 
+          align-items: center;
+          justify-content: center;
+          padding: 12px 20px;
+        }
+
+        #connectTraktButton span {
+          display: inline-block;
+          vertical-align: middle;
+        }
+
+        .trakt-logo {
+          width: 36px;
+          height: 36px;
+          margin-right: 8px;
+        }
+      }
+
+      body.dark-mode #connectTraktButton {
+        background-color: #555;
+        color: #f0f0f5;
+        border: 1px solid #666;
+      }
+
+      body.dark-mode #connectTraktButton:hover {
+        background-color: #666;
+        color: #f0f0f5;
+      }
+
+      #confirmButton {
+        background-color: #007aff;
+      }
+
+      #confirmButton:hover {
+        background-color: #007aff;
+      }
+
+      #installButton {
+        background-color: #007aff;
+      }
+
+      #installButton:hover {
+        background-color: #0051a8;
+      }
+
+      #copyButton {
+        background-color: #4caf50;
+      }
+
+      #copyButton:hover {
+        background-color: #388e3c;
+      }
+
+      .popup {
+        display: none;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px;
+        border-radius: 8px;
+        color: #fff;
+        background-color: #333;
+        font-size: 0.9rem;
+      }
+
+      .popup.success {
+        background-color: #4caf50;
+      }
+
+      .popup.error {
+        background-color: #f44336;
+      }
+
+      @media (max-width: 768px) {
+        .provider-container {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 15px;
+        }
+
+        .provider {
+          width: 100%;
+          height: auto;
+          padding: 10px;
+        }
+      }
+
+      .popup {
+        display: none;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px;
+        border-radius: 8px;
+        color: #fff;
+        background-color: #333;
+        font-size: 0.9rem;
+        z-index: 1000;
+      }
+
+      .popup.success {
+        background-color: #4caf50;
+      }
+
+      .popup.error {
+        background-color: #f44336;
+      }
+
+      .info-icon {
+        font-size: 1.2rem;
+        color: #007aff;
+        cursor: pointer;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        max-width: 500px;
+        width: 90%;
+        text-align: left;
+      }
+
+      .modal h4 {
+        margin-top: 0;
+      }
+
+      .modal-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: #333;
+      }
+
+      @media only screen and (max-width: 768px) {
+        .modal {
+          height: 100vh;
+          max-height: 80vh;
+          margin: 0;
+          border: none;
+          overflow-y: auto;
+        }
+
+        .modal h4 {
+          margin-top: 0;
+        }
+
+        .modal-close {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          cursor: pointer;
+          font-size: 1.5rem;
+          color: #333;
+        }
+      }
+
+      .custom-select-container {
+      position: relative;
+      width: 100%;
+      }
+
+    .tags-input {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      position: relative;
+    }
+
+    #regionSearchInput {
+      border: none;
+      outline: none;
+      flex-grow: 1;
+      padding: 8px;
+      font-size: 1rem;
+      min-width: 100px;
+    }
+
+    .custom-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      max-height: 350px;
+      overflow-y: auto;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 0 0 8px 8px;
+      z-index: 100;
+      display: none;
+    }
+
+    .dropdown-option {
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .dropdown-option:hover {
+      background-color: #f0f0f5;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      background-color: #e9e9ed;
+      color: #333;
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 0.9rem;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+
+    .tag .flag {
+      margin-right: 5px;
+    }
+
+    .tag .country-name {
+      margin-right: 5px;
+    }
+
+    body.dark-mode .custom-select-container {
+      background-color: #555;
+      color: #f0f0f5;
+      border: 1px solid #666;
+      border-radius: 8px;
+      width: 100%;
+      position: relative;
+    }
+
+    body.dark-mode .tags-input {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+      padding: 5px;
+      background-color: #555;
+      border: 1px solid #666;
+      border-radius: 8px;
+      position: relative;
+      color: #f0f0f5;
+    }
+
+    body.dark-mode #regionSearchInput {
+      background-color: #555;
+      color: #f0f0f5;
+      border: none;
+      outline: none;
+      flex-grow: 1;
+      padding: 8px;
+      font-size: 1rem;
+      min-width: 100px;
+    }
+
+    body.dark-mode .custom-dropdown {
+      background-color: #555;
+      border: 1px solid #666;
+      border-radius: 0 0 8px 8px;
+      z-index: 100;
+      max-height: 350px;
+      overflow-y: auto;
+      display: none; 
+    }
+
+    body.dark-mode .dropdown-option {
+      padding: 8px;
+      background-color: #555;
+      color: #f0f0f5;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    body.dark-mode .dropdown-option:hover {
+      background-color: #666;
+    }
+
+    body.dark-mode .tag {
+      display: inline-flex;
+      align-items: center;
+      background-color: #666;
+      color: #f0f0f5;
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 0.9rem;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+
+    body.dark-mode .tag .flag,
+    body.dark-mode .tag .country-name {
+      color: #f0f0f5;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+      margin-left: 10px; 
+      vertical-align: middle;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #4caf50;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    body.dark-mode .picmo__picker {
+        background-color: #444;
+        color: #f0f0f5;
+        border: 1px solid #666;
+    }
+
+    body.dark-mode .picmo__category {
+        background-color: #555;
+        color: #f0f0f5;
+    }
+
+    body.dark-mode .picmo__emoji {
+        background-color: #555;
+        color: #f0f0f5;
+    }
+
+    body.dark-mode .picmo__emoji:hover {
+        background-color: #666;
+    }
+
+    body.dark-mode .picmo__search {
+        background-color: #555;
+        color: #f0f0f5;
+        border: 1px solid #666;
+    }
+
+    body.dark-mode .picmo__search input {
+        background-color: #555;
+        color: #f0f0f5;
+        border: 1px solid #666;
+    }
+
+    body.dark-mode .picmo__footer {
+        background-color: #444;
+        border-top: 1px solid #666;
+    }
+
+    body.dark-mode .picmo__category-label {
+        color: #f0f0f5;
+    }
+
+    body.dark-mode .picmo__skin-tone-selector {
+        background-color: #555;
+        color: #f0f0f5;
+        border: 1px solid #666;
+    }
+
+    body.dark-mode .picmo__skin-tone-selector:hover {
+        background-color: #666;
+    }
+
+    .provider {
+        position: relative;
+        display: inline-block;
+      }
+
+      .provider img {
+        width: 100px;
+        height: auto;
+        display: block;
+      }
+
+      .region-flag {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        font-size: 20px;
+        width: 24px;
+        height: 24px;
+        background-color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
+      }
+/* Style pour les boutons radio "additionalContent" */
+.form-element .radio-group {
+  display: flex;
+  flex-direction: column; /* Aligne verticalement */
+  gap: 10px; /* Espace entre les labels */
+  margin-bottom: 20px;
+}
+
+.form-element .radio-group label {
+  display: inline-flex;
+  align-items: center;
+  color: #333;
+  cursor: pointer;
+  gap: 10px; /* Espace entre le texte du label et le bouton */
+}
+
+.form-element .radio-group label span {
+  flex-grow: 1; /* Permet d'occuper tout l'espace restant pour aligner les boutons à droite du plus long label */
+}
+
+.form-element .radio-group input[type="radio"] {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  background-color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.form-element .radio-group input[type="radio"]:checked {
+  background-color: #007aff;
+  border-color: #007aff;
+}
+
+/* Mode sombre */
+body.dark-mode .radio-group input[type="radio"] {
+  border-color: #666;
+  background-color: #555;
+}
+
+body.dark-mode .radio-group input[type="radio"]:checked {
+  background-color: #4caf50;
+  border-color: #4caf50;
+}
+
+body.dark-mode .radio-group label {
+  color: #f0f0f5;
+}
+
+    </style>
+  </head>
+<html>
+  <body>
+    <div id="addon">
+      <div id="theme-toggle" class="theme-toggle" title="Toggle Dark/Light Mode"> 🌙 </div>
+      <div class="logo">
+        <img src="/assets/logo.png" alt="Addon Logo" />
+      </div>
+      <h1 class="name">Streaming Catalog Providers</h1>
+      <h2 class="version">1.3.0</h2>
+      <h2 class="description">Catalog from TMDB streaming providers</h2>
+      <div id="popup" class="popup"></div>
+    
+      <div id="interface1">
+        <div class="form-element">
+          <label for="tmdbApiKey">TMDB API key (<a href="https://www.themoviedb.org/settings/api" target="_blank" style="color: #007aff;">Get it here</a>)</label>
+          <input type="text" id="tmdbApiKey" name="tmdbApiKey" required />
+        </div>
+        <button type="button" id="confirmButton">CONFIRM</button>
+      </div>
+    
+      <div id="interface2" style="display: none;">
+        <div class="separator"></div>
+        <h3 class="providers-title">Available providers</h3>
+        <div class="form-element">
+          <label for="regionSelect">Catalog regions</label>
+          <div class="custom-select-container" id="regionSelectContainer">
+            <div class="tags-input" id="tagsInput">
+              <input type="text" id="regionSearchInput" placeholder="Type or select a region..." />
+            </div>
+            <div id="regionDropdown" class="custom-dropdown"></div>
+          </div>
+        </div>
+        <div class="form-element">
+          <input type="text" id="searchProviders" placeholder="Search providers..." />
+        </div>
+        <div id="providers" class="provider-container"></div>
+        <div class="separator"></div>
+        <form class="pure-form" id="mainForm">
+          <div class="form-element">
+            <label for="language"> Language </label>
+            <select id="language" name="language" required>
+              <option value="">Select your language</option>
+            </select>
+          </div>
+          <div class="form-element">
+            <label for="ageRange"> Age range (content moderation) <span id="infoIcon" class="info-icon" title="Learn more">?</span>
+            </label>
+            <select id="ageRange" name="ageRange">
+              <option value="">Select your age range</option>
+              <option value="0-5">0-5 years</option>
+              <option value="6-11">6-11 years</option>
+              <option value="12-15">12-15 years</option>
+              <option value="16-17">16-17 years</option>
+              <option value="18+">18+ years</option>
+            </select>
+          </div>
+          <div class="separator"></div>
+          <div class="form-element">
+            <label for="rpdbApiKey">RPDB API key (<a href="https://ratingposterdb.com/api-key/" target="_blank" style="color: #007aff;">Get it here</a>) </label>
+            <input type="text" id="rpdbApiKey" name="rpdbApiKey">
+          </div>
+          <div class="separator"></div>
+          <div class="form-element">
+            <label for="fanartApiKey">Fanart API key (<a href="https://fanart.tv/get-an-api-key" target="_blank" style="color: #007aff;">Get it here</a>) </label>
+            <input type="text" id="fanartApiKey" name="fanartApiKey">
+          </div>
+          <div class="separator"></div>
+          <div class="form-element">
+            <button type="button" id="connectTraktButton">
+              <img src="/assets/logoTrakt.png" alt="Trakt Logo" class="trakt-logo">
+              Connect to Trakt
+            </button>
+          </div>
+          <div class="separator"></div>
+          <div class="form-element">
+            <label for="popularCatalogTitle">Popular catalog title</label>
+            <input type="text" id="popularCatalogTitle" name="popularCatalogTitle" placeholder="Replace 'Popular' in catalog title">
+          </div>
+          
+          <div class="form-element">
+            <label for="newCatalogTitle">New catalog title</label>
+            <input type="text" id="newCatalogTitle" name="newCatalogTitle" placeholder="Replace 'New' in catalog title">
+          </div>
+          <div class="form-element">
+            <label for="filterContentWithoutPoster">
+              Do not display content that does not have a poster (often bad results)
+              <div class="toggle-switch">
+                <input type="checkbox" id="filterContentWithoutPoster" name="filterContentWithoutPoster" value="true">
+                <span class="slider"></span>
+              </div>
+            </label>
+          </div>   
+          <div class="form-element">
+            <label for="recommendationsToggle">
+              Get recommendations related to the content on the content details page
+              <div class="toggle-switch">
+                <input type="checkbox" id="recommendationsToggle" name="recommendationsToggle">
+                <span class="slider"></span>
+              </div>
+            </label>
+            <input type="text" id="recommendationsText" placeholder="Replace 'Recommendations' in content page" style="display:none;" />
+          </div>
+          
+          <div class="form-element">
+            <label for="similarToggle">
+              Get similar content related to the content on the content details page
+              <div class="toggle-switch">
+                <input type="checkbox" id="similarToggle" name="similarToggle">
+                <span class="slider"></span>
+              </div>
+            </label>
+            <input type="text" id="similarText" placeholder="Replace 'Similar' in content page" style="display:none;" />
+          </div>
+          <div class="separator"></div>
+          <h3 class="selected-providers-title">Selected providers</h3>
+          <div id="selectedProviders" class="provider-container"></div>
+          <div class="separator"></div>
+          <div class="button-container">
+            <button type="button" id="installButton">INSTALL</button>
+            <button type="button" id="copyButton">COPY LINK</button>
+          </div>
+          <div class="separator"></div>
+        </form>
+        <div id="infoModal" class="modal">
+          <span id="modalClose" class="modal-close">&times;</span>
+          <h4>Age Range Content Moderation</h4>
+          <p> The content moderation system filters media based on the selected age range to ensure suitability for viewers. Here's how it works: </p>
+          <ul>
+            <li>
+              <strong>0-5 years:</strong> Uses the US certification 'G' (General Audience). Filters out content that is not suitable for very young children. This includes genres such as horror, drama, thriller, crime, war, western, erotic, war & politics, talk-show, soap-opera, reality-show, news, mystery, documentary, and history.
+            </li>
+            <li>
+              <strong>6-11 years:</strong> Uses the US certification 'G' (General Audience). Filters out content unsuitable for young children, maintaining a focus on safe, family-friendly genres. The same genres as for 0-5 years are excluded.
+            </li>
+            <li>
+              <strong>12-15 years:</strong> Uses the US certification 'PG' (Parental Guidance). Allows content with mild themes appropriate for older children and pre-teens. No specific genres are excluded for this age range.
+            </li>
+            <li>
+              <strong>16-17 years:</strong> Uses the US certification 'PG-13' (Parents Strongly Cautioned). Permits content suitable for older teens, including more complex and mature themes but not adult content. No specific genres are excluded for this age range.
+            </li>
+            <li>
+              <strong>18+ years:</strong> Includes all content, even those with adult themes and explicit material. For this age range, no genres are excluded.
+            </li>
+          </ul>
+          <p>
+          <p>
+            <strong>Warning:</strong> Please note that the data for this content moderation system is sourced from TMDB (The Movie Database) and may contain inaccuracies. Viewer discretion is advised.
+          </p>
+          </p>
+        </div>
+      </div>
+    </div>
+    <img id="countdownImage" src="/assets/countdown.webp" alt="Old Film Countdown" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:10000;">
+    <script src="/js/languages.js"></script>
+    <script src="/js/countries.js"></script> 
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const traktUsername = urlParams.get('username');
+        if (traktUsername) {
+    const connectButton = document.getElementById('connectTraktButton');
+    connectButton.style.display = 'none';
+
+    const usernameDisplay = document.createElement('div');
+    usernameDisplay.id = 'traktUsername';
+    usernameDisplay.textContent = `Connected as: ${traktUsername}`;
+    connectButton.parentNode.appendChild(usernameDisplay);
+
+    const toggleContainer = document.createElement('div');
+    toggleContainer.className = 'form-element';
+    toggleContainer.style.marginTop = '10px';
+    toggleContainer.style.marginBottom = '10px';
+    toggleContainer.style.display = 'flex';
+    toggleContainer.style.flexDirection = 'column';
+
+    const toggleLabel = document.createElement('label');
+    toggleLabel.setAttribute('for', 'hideTraktHistory');
+    toggleLabel.textContent = 'Mark the Trakt history as watched in the catalogs';
+
+    const toggleSwitch = document.createElement('div');
+    toggleSwitch.className = 'toggle-switch';
+
+    const toggleInput = document.createElement('input');
+    toggleInput.type = 'checkbox';
+    toggleInput.id = 'hideTraktHistory';
+    toggleInput.name = 'hideTraktHistory';
+
+    const toggleSlider = document.createElement('span');
+    toggleSlider.className = 'slider';
+
+    toggleSwitch.appendChild(toggleInput);
+    toggleSwitch.appendChild(toggleSlider);
+
+    toggleLabel.appendChild(toggleSwitch);
+    toggleContainer.appendChild(toggleLabel);
+
+    usernameDisplay.parentNode.appendChild(toggleContainer);
+
+    const additionalLabelContainer = document.createElement('div');
+    additionalLabelContainer.className = 'additional-label';
+    additionalLabelContainer.style.display = 'none';
+    additionalLabelContainer.style.alignItems = 'center';
+
+    const additionalLabel = document.createElement('label');
+    additionalLabel.textContent = 'Adds ✔️ in front of their name';
+
+    const emojiIcon = document.createElement('span');
+    emojiIcon.innerHTML = '⚙️';
+    emojiIcon.style.marginLeft = '10px';
+    emojiIcon.style.cursor = 'pointer';
+    emojiIcon.style.fontSize = '1em';
+
+    additionalLabelContainer.appendChild(additionalLabel);
+    additionalLabelContainer.appendChild(emojiIcon);
+    usernameDisplay.parentNode.appendChild(additionalLabelContainer);
+
+    const emojiContainer = document.createElement('div');
+    emojiContainer.style.position = 'fixed';
+    emojiContainer.style.display = 'none';
+    emojiContainer.style.backgroundColor = '#fff';
+    emojiContainer.style.border = '1px solid #ccc';
+    emojiContainer.style.zIndex = '1000';
+    emojiContainer.style.width = '90%';
+    emojiContainer.style.height = 'auto';
+    emojiContainer.style.maxWidth = '400px';
+    emojiContainer.style.maxHeight = '400px';
+    emojiContainer.style.overflow = 'auto';
+    emojiContainer.style.left = '50%';
+    emojiContainer.style.top = '50%';
+    emojiContainer.style.transform = 'translate(-50%, -50%)';
+    emojiContainer.style.boxSizing = 'border-box';
+    emojiContainer.style.borderRadius = '8px';
+    emojiContainer.style.scrollbarWidth = 'none';
+    emojiContainer.style.overflow = 'hidden';
+    document.body.appendChild(emojiContainer);
+
+    import('https://cdn.skypack.dev/picmo').then(({ createPicker }) => {
+        const picker = createPicker({
+            rootElement: emojiContainer,
+            theme: 'auto',
+        });
+
+        emojiIcon.addEventListener('click', (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+
+            emojiContainer.style.display = 'block';
+
+            document.addEventListener('click', (event) => {
+                if (!emojiContainer.contains(event.target) && !emojiIcon.contains(event.target)) {
+                    emojiContainer.style.display = 'none';
+                }
+            });
+        });
+
+        picker.addEventListener('emoji:select', (event) => {
+            additionalLabel.textContent = `Adds ${event.emoji} in front of their name`;
+            emojiContainer.style.display = 'none';
+        });
+    });
+
+    toggleInput.addEventListener('change', function() {
+        if (toggleInput.checked) {
+            additionalLabelContainer.style.display = 'flex';
+            additionalLabelContainer.style.width = '100%';
+        } else {
+            additionalLabelContainer.style.display = 'none';
+        }
+    });
+
+    const traktToggleContainer = document.createElement('div');
+    traktToggleContainer.className = 'form-element';
+    traktToggleContainer.style.marginTop = '10px';
+    traktToggleContainer.style.marginBottom = '10px';
+    traktToggleContainer.style.display = 'flex';
+    traktToggleContainer.style.flexDirection = 'column';
+
+    const traktToggleLabel = document.createElement('label');
+    traktToggleLabel.setAttribute('for', 'addWatchedButton');
+    traktToggleLabel.textContent = 'Add a mark as watched button to update Trakt';
+
+    const traktToggleSwitch = document.createElement('div');
+    traktToggleSwitch.className = 'toggle-switch';
+
+    const traktToggleInput = document.createElement('input');
+    traktToggleInput.type = 'checkbox';
+    traktToggleInput.id = 'addWatchedButton';
+    traktToggleInput.name = 'addWatchedButton';
+
+    const traktToggleSlider = document.createElement('span');
+    traktToggleSlider.className = 'slider';
+
+    traktToggleSwitch.appendChild(traktToggleInput);
+    traktToggleSwitch.appendChild(traktToggleSlider);
+
+    traktToggleLabel.appendChild(traktToggleSwitch);
+    traktToggleContainer.appendChild(traktToggleLabel);
+
+    usernameDisplay.parentNode.appendChild(traktToggleContainer);
+
+    const markAsWatchedContainer = document.createElement('div');
+    markAsWatchedContainer.id = 'markAsWatchedContainer';
+    markAsWatchedContainer.style.display = 'none';
+    markAsWatchedContainer.style.marginTop = '10px';
+
+    const markAsWatchedTextbox = document.createElement('input');
+    markAsWatchedTextbox.type = 'text';
+    markAsWatchedTextbox.value = 'Mark as watched';
+    markAsWatchedTextbox.id = 'markAsWatchedTextbox';
+    markAsWatchedTextbox.style.width = '100%';
+    markAsWatchedTextbox.style.padding = '8px';
+    markAsWatchedTextbox.style.fontSize = '16px';
+
+    markAsWatchedContainer.appendChild(markAsWatchedTextbox);
+    usernameDisplay.parentNode.appendChild(markAsWatchedContainer);
+
+    traktToggleInput.addEventListener('change', function() {
+        if (traktToggleInput.checked) {
+            markAsWatchedContainer.style.display = 'block';
+        } else {
+            markAsWatchedContainer.style.display = 'none';
+        }
+    });
+}
+
+
+          function populateLanguageDropdown() {
+            const dropdown = document.getElementById('language');
+            languages.forEach(lang => {
+              const option = document.createElement('option');
+              option.value = lang.iso_639_1;
+              option.textContent = lang.english_name + (lang.name ? ` (${lang.name})` : '');
+              dropdown.appendChild(option);
+            });
+          }
+          populateLanguageDropdown();
+        
+          const mainForm = document.getElementById('mainForm');
+          const installButton = document.getElementById('installButton');
+          const copyButton = document.getElementById('copyButton');
+          const popup = document.getElementById('popup');
+          const providersContainer = document.getElementById('providers');
+          const infoIcon = document.getElementById('infoIcon');
+          const infoModal = document.getElementById('infoModal');
+          const modalClose = document.getElementById('modalClose');
+          const selectedProvidersContainer = document.getElementById('selectedProviders');
+          const confirmButton = document.getElementById('confirmButton');
+          const interface1 = document.getElementById('interface1');
+          const interface2 = document.getElementById('interface2');
+          let providersData = [];
+          let selectedProviders = [];
+          let providersMap = {};
+        
+          new Sortable(selectedProvidersContainer, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: (evt) => {
+              selectedProviders = Array.from(selectedProvidersContainer.querySelectorAll('.selected-provider')).map(div => div.getAttribute('data-id'));
+            }
+          });
+        
+          const renderSelectedProviders = () => {
+            selectedProvidersContainer.innerHTML = selectedProviders.map(providerId => {
+              const provider = providersMap[providerId];
+              if (!provider) return '';
+
+              const regionCode = Object.keys(JSON.parse(provider.display_priorities)).find(region => selectedRegions.includes(region));
+
+              return `
+                <div class="selected-provider" data-id="${providerId}">
+                  <img src="https://image.tmdb.org/t/p/w500/${provider.logo_path}" alt="${provider.provider_name}" title="${provider.provider_name}" />
+                  <button class="remove-button" data-id="${providerId}">&times;</button>
+                </div>`;
+            }).join('');
+
+            document.querySelectorAll('.remove-button').forEach(button => {
+              button.addEventListener('click', (event) => {
+                const providerId = event.target.getAttribute('data-id');
+                selectedProviders = selectedProviders.filter(id => id !== providerId);
+                
+                const providerElement = document.querySelector(`.provider[data-id="${providerId}"]`);
+                if (providerElement) providerElement.style.display = 'block';
+                
+                const regionCode = providerElement.getAttribute('data-region');
+                if (!selectedProviders.some(id => {
+                  const provider = providersMap[id];
+                  const displayPriorities = JSON.parse(provider.display_priorities);
+                  return Object.keys(displayPriorities).includes(regionCode);
+                })) {
+                  selectedRegions = selectedRegions.filter(region => region !== regionCode);
+                }
+
+                renderSelectedProviders();
+              });
+            });
+          };
+
+          const fetchProviders = async (apiKey) => {
+            try {
+              const response = await fetch('/fetch-providers', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ apiKey }),
+              });
+        
+              if (!response.ok) {
+                throw new Error('Failed to fetch providers');
+              }
+        
+              const providers = await response.json();
+              return providers;
+            } catch (error) {
+              console.error('Error fetching providers:', error);
+              showPopup('Failed to fetch providers. Please check your API key and try again.', 'error');
+              return [];
+            }
+          };
+         
+          const renderProviders = () => {
+            if (selectedRegions.length === 0) {
+              providersContainer.innerHTML = '';
+              return;
+            }
+
+            let filteredProviders = providersData.filter(provider => {
+              const displayPriorities = JSON.parse(provider.display_priorities || '{}');
+              return selectedRegions.some(regionCode => displayPriorities[regionCode] !== undefined);
+            });
+
+            filteredProviders.sort((a, b) => a.provider_name.localeCompare(b.provider_name));
+            providersContainer.innerHTML = filteredProviders.map(provider => `
+              <div class="provider" data-id="${provider.provider_id}">
+                <img src="https://image.tmdb.org/t/p/w500/${provider.logo_path}" alt="${provider.provider_name}" title="${provider.provider_name}" />
+              </div>
+            `).join('');
+
+            document.querySelectorAll('.provider').forEach(provider => {
+              provider.addEventListener('click', () => {
+                const providerId = provider.getAttribute('data-id');
+                if (selectedProviders.includes(providerId)) {
+                  selectedProviders = selectedProviders.filter(id => id !== providerId);
+                  provider.style.display = 'block';
+                } else {
+                  selectedProviders.push(providerId);
+                  provider.style.display = 'none';
+                }
+                renderSelectedProviders();
+              });
+            });
+          };
+        
+          confirmButton.addEventListener('click', async () => {
+          const apiKey = document.getElementById('tmdbApiKey').value.trim();
+          if (!apiKey) {
+            showPopup('Please enter your TMDB API key.', 'error');
+            return;
+          }
+
+          providersData = await fetchProviders(apiKey);
+          populateProvidersMap();
+
+          const event = new Event('providersLoaded');
+          confirmButton.dispatchEvent(event);
+
+          renderProviders('ALL');
+          interface1.style.display = 'none';
+          interface2.style.display = 'block';
+          });
+        
+          const showInfoModal = () => {
+            infoModal.style.display = 'block';
+          };
+          const hideInfoModal = () => {
+            infoModal.style.display = 'none';
+          };
+          infoIcon.addEventListener('click', showInfoModal);
+          modalClose.addEventListener('click', hideInfoModal);
+        
+          let selectedRegions = [];
+        
+          const populateRegionDropdown = () => {
+            const regionDropdown = document.getElementById('regionDropdown');
+            regionDropdown.innerHTML = '';
+        
+            const sortedCountries = countries.sort((a, b) => a.english_name.localeCompare(b.english_name));
+        
+            sortedCountries.forEach(country => {
+              const option = document.createElement('div');
+              option.className = 'dropdown-option';
+              option.setAttribute('data-value', country.iso_3166_1);
+        
+              const flag = country.iso_3166_1
+                .toUpperCase()
+                .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+              option.innerHTML = `${flag} ${country.english_name}`;
+              option.onclick = () => {
+                addSelectedRegion(country.iso_3166_1, flag, country.english_name);
+                filterRegionDropdown('');
+                document.getElementById('regionSearchInput').value = '';
+                regionDropdown.style.display = 'none';
+              };
+              regionDropdown.appendChild(option);
+            });
+          };
+        
+          const filterRegionDropdown = (searchTerm) => {
+            const options = document.querySelectorAll('.dropdown-option');
+            options.forEach(option => {
+              const text = option.textContent.toLowerCase();
+              option.style.display = text.includes(searchTerm.toLowerCase()) ? 'block' : 'none';
+            });
+            document.getElementById('regionDropdown').style.display = 'block';
+          };
+        
+          document.getElementById('regionSearchInput').addEventListener('input', function () {
+            const searchTerm = this.value;
+            filterRegionDropdown(searchTerm);
+          });
+        
+          const addSelectedRegion = (regionCode, flag, countryName) => {
+            if (!selectedRegions.includes(regionCode)) {
+              selectedRegions.push(regionCode);
+            }
+
+            if (!document.querySelector(`.tag[data-id='${regionCode}']`)) {
+              const tag = document.createElement('span');
+              tag.className = 'tag';
+              tag.setAttribute('data-id', regionCode);
+              tag.innerHTML = `
+                <span class="flag">${flag}</span>
+                <span class="country-name">${countryName}</span>
+              `;
+              tag.addEventListener('click', () => {
+                removeSelectedRegion(regionCode);
+              });
+              document.getElementById('regionSearchInput').parentNode.insertBefore(tag, document.getElementById('regionSearchInput'));
+            }
+
+            renderProviders();
+          };
+
+          const removeSelectedRegion = (regionCode) => {
+            selectedRegions = selectedRegions.filter(code => code !== regionCode);
+            document.querySelector(`.tag[data-id='${regionCode}']`).remove();
+
+            renderProviders();
+          };
+
+          populateRegionDropdown();
+        
+          document.getElementById('regionSearchInput').addEventListener('focus', function () {
+            document.getElementById('regionDropdown').style.display = 'block';
+          });
+        
+          document.addEventListener('click', function (event) {
+            const regionContainer = document.getElementById('regionSelectContainer');
+            if (!regionContainer.contains(event.target)) {
+              document.getElementById('regionDropdown').style.display = 'none';
+            }
+          });
+        
+          const encodeToBase64 = (str) => {
+            return btoa(unescape(encodeURIComponent(str)));
+          };
+
+          const getStremioLink = () => {
+            const config = Object.fromEntries(new FormData(mainForm));
+            config.providers = selectedProviders;
+            config.ageRange = document.getElementById('ageRange').value;
+            config.tmdbApiKey = document.getElementById('tmdbApiKey').value.trim();
+            config.regions = selectedRegions;
+            config.filterContentWithoutPoster = document.getElementById('filterContentWithoutPoster').checked ? 'true' : '';
+
+            config.traktUsername = traktUsername || '';
+            config.hideTraktHistory = document.getElementById('hideTraktHistory') ? document.getElementById('hideTraktHistory').checked.toString() : 'false';
+
+            const additionalLabel = document.querySelector('.additional-label label');
+            const watchedEmoji = additionalLabel ? additionalLabel.textContent.split(' ')[1] || '✔️' : '✔️';
+            config.watchedEmoji = watchedEmoji;
+
+            const addWatchedTraktBtnToggle = document.getElementById('addWatchedButton');
+            if (addWatchedTraktBtnToggle && addWatchedTraktBtnToggle.checked) {
+                const markAsWatchedTextbox = document.getElementById('markAsWatchedTextbox');
+                config.addWatchedTraktBtn = markAsWatchedTextbox ? markAsWatchedTextbox.value.trim() : '';
+            }
+
+            const recommendationsToggle = document.getElementById('recommendationsToggle').checked;
+            const similarToggle = document.getElementById('similarToggle').checked;
+            const recommendationsText = document.getElementById('recommendationsText').value.trim() || 'Recommendations';
+            const similarText = document.getElementById('similarText').value.trim() || 'Similar';
+
+            if (recommendationsToggle && similarToggle) {
+                config.additionalContent = 'recommendations-similar';
+                config.recommendationsTitle = recommendationsText;
+                config.similarTitle = similarText;
+            } else if (recommendationsToggle) {
+                config.additionalContent = 'recommendations';
+                config.recommendationsTitle = recommendationsText;
+            } else if (similarToggle) {
+                config.additionalContent = 'similar';
+                config.similarTitle = similarText;
+            }
+
+            const encodedConfig = encodeToBase64(JSON.stringify(config));
+            return "stremio://" + window.location.host + "/" + encodedConfig + "/manifest.json";
+        };
+
+        const getHttpsLink = () => {
+            const config = Object.fromEntries(new FormData(mainForm));
+            config.providers = selectedProviders;
+            config.ageRange = document.getElementById('ageRange').value;
+            config.tmdbApiKey = document.getElementById('tmdbApiKey').value.trim();
+            config.regions = selectedRegions;
+            config.filterContentWithoutPoster = document.getElementById('filterContentWithoutPoster').checked ? 'true' : '';
+
+            config.traktUsername = traktUsername || '';
+            config.hideTraktHistory = document.getElementById('hideTraktHistory') ? document.getElementById('hideTraktHistory').checked.toString() : 'false';
+
+            const additionalLabel = document.querySelector('.additional-label label');
+            const watchedEmoji = additionalLabel ? additionalLabel.textContent.split(' ')[1] || '✔️' : '✔️';
+            config.watchedEmoji = watchedEmoji;
+
+            const addWatchedTraktBtnToggle = document.getElementById('addWatchedButton');
+            if (addWatchedTraktBtnToggle && addWatchedTraktBtnToggle.checked) {
+                const markAsWatchedTextbox = document.getElementById('markAsWatchedTextbox');
+                config.addWatchedTraktBtn = markAsWatchedTextbox ? markAsWatchedTextbox.value.trim() : '';
+            }
+
+            const recommendationsToggle = document.getElementById('recommendationsToggle').checked;
+            const similarToggle = document.getElementById('similarToggle').checked;
+            const recommendationsText = document.getElementById('recommendationsText').value.trim() || 'Recommendations';
+            const similarText = document.getElementById('similarText').value.trim() || 'Similar';
+
+            if (recommendationsToggle && similarToggle) {
+                config.additionalContent = 'recommendations-similar';
+                config.recommendationsTitle = recommendationsText;
+                config.similarTitle = similarText;
+            } else if (recommendationsToggle) {
+                config.additionalContent = 'recommendations';
+                config.recommendationsTitle = recommendationsText;
+            } else if (similarToggle) {
+                config.additionalContent = 'similar';
+                config.similarTitle = similarText;
+            }
+
+            const encodedConfig = encodeToBase64(JSON.stringify(config));
+            return "https://" + window.location.host + "/" + encodedConfig + "/manifest.json";
+        };
+
+          const showPopup = (message, type) => {
+            popup.textContent = message;
+            popup.className = `popup ${type}`;
+            popup.style.display = 'block';
+            setTimeout(() => {
+              popup.style.display = 'none';
+            }, 5000);
+          };
+        
+          const validateForm = () => {
+          const language = document.getElementById('language').value.trim();
+          const ageRange = document.getElementById('ageRange').value.trim();
+          const regionSearchInput = document.getElementById('regionSearchInput').value.trim();
+
+          const isRegionSelected = selectedRegions.length > 0;
+
+          return isRegionSelected && language && ageRange && selectedProviders.length > 0;
+          };
+        
+          copyButton.onclick = () => {
+            if (!validateForm()) {
+              showPopup('Please select at least one Catalog regions, your Language, an Age Range and choose at least one provider.', 'error');
+              return;
+            }
+            const link = getHttpsLink();
+            navigator.clipboard.writeText(link).then(() => {
+              showPopup('Link copied to clipboard!', 'success');
+            }).catch(err => {
+              console.error('Failed to copy the link: ', err);
+              showPopup('Failed to copy the link.', 'error');
+            });
+          };
+        
+          installButton.onclick = () => {
+            if (!validateForm()) {
+              showPopup('Please select at least one Catalog regions, your Language, an Age Range and choose at least one provider.', 'error');
+              return;
+            }
+            const link = getStremioLink();
+            window.location.href = link;
+          };
+        
+          document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            document.getElementById('theme-toggle').textContent = isDarkMode ? '🌞' : '🌙';
+          });
+
+          let snakeGameActive = false;
+          const snakeGameCanvas = document.createElement('canvas');
+          const snakeGameContext = snakeGameCanvas.getContext('2d');
+          snakeGameCanvas.width = window.innerWidth;
+          snakeGameCanvas.height = window.innerHeight;
+          snakeGameCanvas.style.position = 'fixed';
+          snakeGameCanvas.style.top = '0';
+          snakeGameCanvas.style.left = '0';
+          snakeGameCanvas.style.zIndex = '1000';
+          snakeGameCanvas.style.backgroundColor = '#f0f0f0';
+          document.body.appendChild(snakeGameCanvas);
+          snakeGameCanvas.style.display = 'none';
+
+          const SNAKE_SIZE = Math.min(40, window.innerWidth / 20);
+          let snake;
+          let dx;
+          let dy;
+          let foodX;
+          let foodY;
+          let changingDirection;
+          let providersIcons = [];
+          let currentFoodIcon;
+          let eatenIcons = new Set();
+          let iconsCache = {};
+          let gameSpeed = 85;
+
+          const resetGame = () => {
+            snake = [
+              { x: 160, y: 160 },
+              { x: 160 - SNAKE_SIZE, y: 160 },
+              { x: 160 - 2 * SNAKE_SIZE, y: 160 },
+              { x: 160 - 3 * SNAKE_SIZE, y: 160 },
+            ];
+            dx = SNAKE_SIZE;
+            dy = 0;
+            changingDirection = false;
+            eatenIcons.clear();
+            generateFood();
+          };
+
+          const snakeGame = () => {
+            fetchProviderIcons();
+            resetGame();
+            document.getElementById('addon').style.display = 'none';
+            snakeGameCanvas.style.display = 'block';
+            snakeGameActive = true;
+            document.addEventListener('keydown', changeDirection);
+            addTouchControls();
+            main();
+          };
+
+          function main() {
+            if (hasGameEnded()) {
+              displayScoreAndIcons();
+              return;
+            }
+
+            if (eatenIcons.size === providersIcons.length) {
+              displayScoreAndIcons(true);
+              return;
+            }
+
+            setTimeout(() => {
+              changingDirection = false;
+              clearCanvas();
+              drawScore();
+              drawFood();
+              advanceSnake();
+              drawSnake();
+              main();
+            }, gameSpeed);
+          }
+
+          function clearCanvas() {
+            snakeGameContext.fillStyle = '#f0f0f0';
+            snakeGameContext.fillRect(0, 0, snakeGameCanvas.width, snakeGameCanvas.height);
+            snakeGameContext.strokeRect(0, 0, snakeGameCanvas.width, snakeGameCanvas.height);
+          }
+
+          function drawScore() {
+            snakeGameContext.font = '20px Arial';
+            snakeGameContext.fillStyle = 'black';
+            snakeGameContext.textAlign = 'left';
+            snakeGameContext.textBaseline = 'top';
+            snakeGameContext.fillText('Score: ' + eatenIcons.size, 10, 10);
+          }
+
+          function drawSnake() {
+            for (let i = 0; i < snake.length; i++) {
+              if (i === 0) {
+                drawSnakeHead(snake[i]);
+              } else {
+                drawSnakePart(snake[i]);
+              }
+            }
+          }
+
+          function drawSnakeHead(snakePart) {
+            snakeGameContext.fillStyle = 'lightgreen';
+            snakeGameContext.strokeStyle = 'darkgreen';
+            snakeGameContext.lineWidth = 2;
+            snakeGameContext.fillRect(snakePart.x, snakePart.y, SNAKE_SIZE, SNAKE_SIZE);
+            snakeGameContext.strokeRect(snakePart.x, snakePart.y, SNAKE_SIZE, SNAKE_SIZE);
+
+            snakeGameContext.fillStyle = 'black';
+            snakeGameContext.beginPath();
+            snakeGameContext.arc(snakePart.x + 10, snakePart.y + 10, 3, 0, 2 * Math.PI);
+            snakeGameContext.arc(snakePart.x + 30, snakePart.y + 10, 3, 0, 2 * Math.PI);
+            snakeGameContext.fill();
+
+            snakeGameContext.strokeStyle = 'red';
+            snakeGameContext.lineWidth = 2;
+            snakeGameContext.beginPath();
+            snakeGameContext.moveTo(snakePart.x + 20, snakePart.y + 20);
+            snakeGameContext.lineTo(snakePart.x + 20, snakePart.y + 35);
+            snakeGameContext.stroke();
+          }
+
+          function drawSnakePart(snakePart) {
+            snakeGameContext.fillStyle = 'lightgreen';
+            snakeGameContext.strokeStyle = 'darkgreen';
+            snakeGameContext.fillRect(snakePart.x, snakePart.y, SNAKE_SIZE, SNAKE_SIZE);
+            snakeGameContext.strokeRect(snakePart.x, snakePart.y, SNAKE_SIZE, SNAKE_SIZE);
+          }
+
+          function advanceSnake() {
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            snake.unshift(head);
+
+            if (Math.abs(head.x - foodX) < SNAKE_SIZE && Math.abs(head.y - foodY) < SNAKE_SIZE) {
+              eatenIcons.add(currentFoodIcon);
+              generateFood();
+            } else {
+              snake.pop();
+            }
+          }
+
+          function changeDirection(event) {
+            const keyPressed = event.keyCode;
+            const goingUp = dy === -SNAKE_SIZE;
+            const goingDown = dy === SNAKE_SIZE;
+            const goingRight = dx === SNAKE_SIZE;
+            const goingLeft = dx === -SNAKE_SIZE;
+
+            if (changingDirection) return;
+            changingDirection = true;
+
+            if (keyPressed === 37 && !goingRight) {
+              dx = -SNAKE_SIZE;
+              dy = 0;
+            }
+            if (keyPressed === 38 && !goingDown) {
+              dx = 0;
+              dy = -SNAKE_SIZE;
+            }
+            if (keyPressed === 39 && !goingLeft) {
+              dx = SNAKE_SIZE;
+              dy = 0;
+            }
+            if (keyPressed === 40 && !goingUp) {
+              dx = 0;
+              dy = SNAKE_SIZE;
+            }
+          }
+
+          function fetchProviderIcons() {
+            const providerElements = document.querySelectorAll('#providers .provider img');
+            providersIcons = Array.from(providerElements).map(img => img.src);
+
+            providersIcons.forEach(iconSrc => {
+              const img = new Image();
+              img.src = iconSrc;
+              iconsCache[iconSrc] = img;
+            });
+          }
+
+          function generateFood() {
+            if (providersIcons.length === 0) return;
+
+            const availableIcons = providersIcons.filter(icon => !eatenIcons.has(icon));
+            currentFoodIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
+
+            foodX = Math.round((Math.random() * (snakeGameCanvas.width - SNAKE_SIZE)) / SNAKE_SIZE) * SNAKE_SIZE;
+            foodY = Math.round((Math.random() * (snakeGameCanvas.height - SNAKE_SIZE)) / SNAKE_SIZE) * SNAKE_SIZE;
+          }
+
+          function drawFood() {
+            const foodImage = iconsCache[currentFoodIcon];
+            if (foodImage) {
+              snakeGameContext.drawImage(foodImage, foodX, foodY, SNAKE_SIZE, SNAKE_SIZE);
+              snakeGameContext.strokeStyle = 'red';
+              snakeGameContext.lineWidth = 2;
+              snakeGameContext.strokeRect(foodX, foodY, SNAKE_SIZE, SNAKE_SIZE);
+            }
+          }
+
+          function hasGameEnded() {
+            for (let i = 4; i < snake.length; i++) {
+              const hasCollided = snake[i].x === snake[0].x && snake[i].y === snake[0].y;
+              if (hasCollided) return true;
+            }
+
+            const hitLeftWall = snake[0].x < 0;
+            const hitRightWall = snake[0].x >= snakeGameCanvas.width;
+            const hitTopWall = snake[0].y < 0;
+            const hitBottomWall = snake[0].y >= snakeGameCanvas.height;
+
+            return hitLeftWall || hitRightWall || hitTopWall || hitBottomWall;
+          }
+
+          function displayScoreAndIcons(won = false) {
+            clearCanvas();
+            snakeGameContext.font = '30px Arial';
+            snakeGameContext.fillStyle = 'black';
+            snakeGameContext.textAlign = 'center';
+            const message = won ? 'Congratulations, you won!' : 'Game Over!';
+            snakeGameContext.fillText(message, snakeGameCanvas.width / 2, snakeGameCanvas.height / 2 - 40);
+            snakeGameContext.fillText('Score: ' + eatenIcons.size, snakeGameCanvas.width / 2, snakeGameCanvas.height / 2);
+
+            let startX = snakeGameCanvas.width / 2 - (eatenIcons.size * (SNAKE_SIZE / 2));
+            let startY = snakeGameCanvas.height / 2 + 40;
+            let iconsPerRow = Math.floor(snakeGameCanvas.width / (SNAKE_SIZE + 10));
+
+            let currentIconIndex = 0;
+            eatenIcons.forEach(iconSrc => {
+              const img = new Image();
+              img.src = iconSrc;
+              img.onload = () => {
+                snakeGameContext.drawImage(img, startX, startY, SNAKE_SIZE, SNAKE_SIZE);
+                currentIconIndex++;
+                startX += SNAKE_SIZE + 10;
+
+                if (currentIconIndex >= iconsPerRow) {
+                  startX = snakeGameCanvas.width / 2 - (eatenIcons.size * (SNAKE_SIZE / 2));
+                  startY += SNAKE_SIZE + 10;
+                  currentIconIndex = 0;
+                }
+              };
+            });
+
+            createQuitButton();
+          }
+
+          function createQuitButton() {
+            const quitButton = document.createElement('button');
+            quitButton.textContent = 'Quit';
+            quitButton.style.position = 'fixed';
+            quitButton.style.top = '20px';
+            quitButton.style.right = '20px';
+            quitButton.style.zIndex = '1001';
+            quitButton.style.padding = '10px 20px';
+            quitButton.style.fontSize = '20px';
+            quitButton.style.backgroundColor = '#ff4d4d';
+            quitButton.style.color = 'white';
+            quitButton.style.border = 'none';
+            quitButton.style.borderRadius = '5px';
+            quitButton.style.cursor = 'pointer';
+            document.body.appendChild(quitButton);
+
+            quitButton.onclick = () => {
+              snakeGameCanvas.style.display = 'none';
+              document.getElementById('addon').style.display = 'block';
+              document.getElementById('searchProviders').value = '';
+              quitButton.remove();
+              snakeGameActive = false;
+            };
+          }
+
+          function addTouchControls() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            snakeGameCanvas.addEventListener('touchstart', function (event) {
+              event.preventDefault();
+              touchStartX = event.touches[0].clientX;
+              touchStartY = event.touches[0].clientY;
+            });
+
+            snakeGameCanvas.addEventListener('touchmove', function (event) {
+              event.preventDefault();
+              const touchEndX = event.touches[0].clientX;
+              const touchEndY = event.touches[0].clientY;
+              const dx = touchEndX - touchStartX;
+              const dy = touchEndY - touchStartY;
+
+              if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 0 && dx >= 20 && !changingDirection) changeDirection({ keyCode: 39 });
+                if (dx < 0 && dx <= -20 && !changingDirection) changeDirection({ keyCode: 37 });
+              } else {
+                if (dy > 0 && dy >= 20 && !changingDirection) changeDirection({ keyCode: 40 });
+                if (dy < 0 && dy <= -20 && !changingDirection) changeDirection({ keyCode: 38 });
+              }
+              touchStartX = touchEndX;
+              touchStartY = touchEndY;
+            });
+          }
+        
+          const getFlagForRegion = (isoCode) => {
+            const flag = isoCode
+              .toUpperCase()
+              .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+            console.log("Flag for region:", isoCode, "is", flag);
+            return flag;
+          };
+
+          const getCountryInfo = (regionCode) => {
+            const country = countries.find(c => c.iso_3166_1 === regionCode);
+            if (country) {
+              const flag = country.iso_3166_1
+                .toUpperCase()
+                .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+              return { english_name: country.english_name, flag: flag };
+            }
+            return { english_name: regionCode, flag: regionCode };
+          };
+
+          document.getElementById('searchProviders').addEventListener('input', function(event) {
+            const searchTerm = event.target.value.toLowerCase();
+            console.log("Search term:", searchTerm);
+
+            document.getElementById('providers').innerHTML = '';
+
+            Object.keys(providersMap).forEach(providerId => {
+              const provider = providersMap[providerId];
+              const providerName = provider.provider_name.toLowerCase();
+
+              if (providerName.includes(searchTerm)) {
+                const displayPriorities = JSON.parse(provider.display_priorities);
+                console.log("Display priorities for provider:", provider.provider_name, displayPriorities);
+
+                Object.keys(displayPriorities).forEach(regionCode => {
+                  const { english_name, flag } = getCountryInfo(regionCode);
+
+                  const providerElement = document.createElement('div');
+                  providerElement.className = 'provider';
+                  providerElement.setAttribute('data-id', providerId);
+                  providerElement.setAttribute('data-region', regionCode);
+                  
+                  providerElement.innerHTML = `
+                    <img src="https://image.tmdb.org/t/p/w500/${provider.logo_path}" alt="${provider.provider_name}" title="${provider.provider_name}" />
+                    <span class="region-flag">${flag}</span>
+                  `;
+                  
+                  console.log("Generated HTML for provider:", providerElement.innerHTML);
+
+                  providerElement.addEventListener('click', function() {
+                    if (!selectedProviders.includes(providerId)) {
+                      selectedProviders.push(providerId);
+                      addSelectedRegion(regionCode, flag, english_name);
+                    }
+
+                    renderSelectedProviders();
+                  });
+
+                  document.getElementById('providers').appendChild(providerElement);
+                });
+              }
+            });
+
+            if (searchTerm === '') {
+              renderProviders();
+            }
+          });
+
+          function getQueryParams() {
+            const url = new URL(window.location.href);
+
+            const path = url.pathname.split('/')[1];
+
+            if (!path || path.length < 10) {
+              console.log('No valid base64 encoded parameters found in the URL.');
+              return {};
+            }
+
+            try {
+              const decodedPath = atob(path);
+
+              const decodedURI = decodeURIComponent(escape(decodedPath));
+
+              const config = JSON.parse(decodedURI);
+
+              if (config.traktUsername && !url.searchParams.has('username')) {
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('username', config.traktUsername);
+                const newUrl = currentUrl.toString();
+
+                window.location.href = newUrl;
+
+                return {};
+              }
+
+              return config;
+            } catch (error) {
+              console.error('Error decoding or parsing configuration parameters:', error);
+              if (path) {
+                showPopup('Error decoding or parsing configuration parameters. Please check your input and try again.', 'error');
+              }
+            }
+
+            return {};
+          }
+
+          function prefillFormFromUrlParams() { 
+            const params = getQueryParams();
+
+            if (params.tmdbApiKey && !localStorage.getItem('tmdbApiKey')) {
+                localStorage.setItem('tmdbApiKey', params.tmdbApiKey);
+            }
+            if (params.language && !localStorage.getItem('language')) {
+                localStorage.setItem('language', params.language);
+            }
+            if (params.ageRange && !localStorage.getItem('ageRange')) {
+                localStorage.setItem('ageRange', params.ageRange);
+            }
+            if (params.rpdbApiKey && !localStorage.getItem('rpdbApiKey')) {
+                localStorage.setItem('rpdbApiKey', params.rpdbApiKey);
+            }
+            if (params.fanartApiKey && !localStorage.getItem('fanartApiKey')) {
+                localStorage.setItem('fanartApiKey', params.fanartApiKey);
+            }
+            if (params.providers && !localStorage.getItem('selectedProviders')) {
+                localStorage.setItem('selectedProviders', JSON.stringify(params.providers));
+            }
+            if (params.regions && !localStorage.getItem('selectedRegions')) {
+                localStorage.setItem('selectedRegions', JSON.stringify(params.regions));
+            }
+            if (params.filterContentWithoutPoster && !localStorage.getItem('filterContentWithoutPoster')) {
+                localStorage.setItem('filterContentWithoutPoster', params.filterContentWithoutPoster);
+            }
+
+            if (params.popularCatalogTitle && !localStorage.getItem('popularCatalogTitle')) {
+                localStorage.setItem('popularCatalogTitle', params.popularCatalogTitle);
+            }
+            if (params.newCatalogTitle && !localStorage.getItem('newCatalogTitle')) {
+                localStorage.setItem('newCatalogTitle', params.newCatalogTitle);
+            }
+            if (params.recommendationsToggle && !localStorage.getItem('recommendationsToggle')) {
+                localStorage.setItem('recommendationsToggle', params.recommendationsToggle);
+            }
+            if (params.recommendationsText && !localStorage.getItem('recommendationsText')) {
+                localStorage.setItem('recommendationsText', params.recommendationsText);
+            }
+            if (params.similarToggle && !localStorage.getItem('similarToggle')) {
+                localStorage.setItem('similarToggle', params.similarToggle);
+            }
+            if (params.similarText && !localStorage.getItem('similarText')) {
+                localStorage.setItem('similarText', params.similarText);
+            }
+
+            const tmdbApiKey = localStorage.getItem('tmdbApiKey');
+            const language = localStorage.getItem('language');
+            const ageRange = localStorage.getItem('ageRange');
+            const rpdbApiKey = localStorage.getItem('rpdbApiKey');
+            const fanartApiKey = localStorage.getItem('fanartApiKey');
+            const savedProviders = localStorage.getItem('selectedProviders');
+            const savedRegions = localStorage.getItem('selectedRegions');
+            const filterContentWithoutPoster = localStorage.getItem('filterContentWithoutPoster');
+            
+            const popularCatalogTitle = localStorage.getItem('popularCatalogTitle');
+            const newCatalogTitle = localStorage.getItem('newCatalogTitle');
+            const recommendationsToggle = localStorage.getItem('recommendationsToggle');
+            const recommendationsText = localStorage.getItem('recommendationsText');
+            const similarToggle = localStorage.getItem('similarToggle');
+            const similarText = localStorage.getItem('similarText');
+
+            if (tmdbApiKey) {
+                document.getElementById('tmdbApiKey').value = tmdbApiKey;
+                confirmButton.click();
+            }
+
+            if (language) {
+                document.getElementById('language').value = language;
+            }
+
+            if (ageRange) {
+                document.getElementById('ageRange').value = ageRange;
+            }
+
+            if (rpdbApiKey) {
+                document.getElementById('rpdbApiKey').value = rpdbApiKey;
+            }
+
+            if (fanartApiKey) {
+                document.getElementById('fanartApiKey').value = fanartApiKey;
+            }
+
+            if (filterContentWithoutPoster === 'true') {
+                document.getElementById('filterContentWithoutPoster').checked = true;
+            } else if (filterContentWithoutPoster === 'false') {
+                document.getElementById('filterContentWithoutPoster').checked = false;
+            }
+
+            if (savedProviders) {
+                selectedProviders = JSON.parse(savedProviders);
+
+                if (providersData.length > 0) {
+                    populateProvidersMap();
+                    renderSelectedProviders();
+                } else {
+                    confirmButton.addEventListener('providersLoaded', () => {
+                        populateProvidersMap();
+                        renderSelectedProviders();
+                    }, { once: true });
+                }
+            }
+
+            if (savedRegions) {
+                selectedRegions = JSON.parse(savedRegions);
+                selectedRegions.forEach(regionCode => {
+                    const country = countries.find(c => c.iso_3166_1 === regionCode);
+                    if (country) {
+                        const flag = country.iso_3166_1.toUpperCase().replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+                        addSelectedRegion(regionCode, flag, country.english_name);
+                    }
+                });
+            }
+
+            if (popularCatalogTitle) {
+                document.getElementById('popularCatalogTitle').value = popularCatalogTitle;
+            }
+
+            if (newCatalogTitle) {
+                document.getElementById('newCatalogTitle').value = newCatalogTitle;
+            }
+
+            if (recommendationsToggle === 'true') {
+                document.getElementById('recommendationsToggle').checked = true;
+                document.getElementById('recommendationsText').style.display = 'block';
+            } else {
+                document.getElementById('recommendationsToggle').checked = false;
+                document.getElementById('recommendationsText').style.display = 'none';
+            }
+
+            if (recommendationsText) {
+                document.getElementById('recommendationsText').value = recommendationsText;
+            }
+
+            if (similarToggle === 'true') {
+                document.getElementById('similarToggle').checked = true;
+                document.getElementById('similarText').style.display = 'block';
+            } else {
+                document.getElementById('similarToggle').checked = false;
+                document.getElementById('similarText').style.display = 'none';
+            }
+
+            if (similarText) {
+                document.getElementById('similarText').value = similarText;
+            }
+
+            localStorage.removeItem('tmdbApiKey');
+            localStorage.removeItem('language');
+            localStorage.removeItem('ageRange');
+            localStorage.removeItem('rpdbApiKey');
+            localStorage.removeItem('fanartApiKey');
+            localStorage.removeItem('selectedProviders');
+            localStorage.removeItem('selectedRegions');
+            localStorage.removeItem('filterContentWithoutPoster');
+            localStorage.removeItem('popularCatalogTitle');
+            localStorage.removeItem('newCatalogTitle');
+            localStorage.removeItem('recommendationsToggle');
+            localStorage.removeItem('recommendationsText');
+            localStorage.removeItem('similarToggle');
+            localStorage.removeItem('similarText');
+        }
+
+          const populateProvidersMap = () => {
+            providersData.forEach(provider => {
+              providersMap[provider.provider_id] = provider;
+            });
+          };
+
+          prefillFormFromUrlParams();
+
+          fetch('/env')
+            .then(response => response.json())
+            .then(env => {
+                document.getElementById('connectTraktButton').addEventListener('click', () => {
+                    localStorage.setItem('tmdbApiKey', document.getElementById('tmdbApiKey').value.trim());
+                    localStorage.setItem('language', document.getElementById('language').value);
+                    localStorage.setItem('ageRange', document.getElementById('ageRange').value);
+                    localStorage.setItem('rpdbApiKey', document.getElementById('rpdbApiKey').value);
+                    localStorage.setItem('fanartApiKey', document.getElementById('fanartApiKey').value);
+                    localStorage.setItem('selectedProviders', JSON.stringify(selectedProviders));
+                    localStorage.setItem('selectedRegions', JSON.stringify(selectedRegions));
+                    localStorage.setItem('filterContentWithoutPoster', document.getElementById('filterContentWithoutPoster').checked ? 'true' : 'false');
+                    localStorage.setItem('popularCatalogTitle', document.getElementById('popularCatalogTitle').value.trim());
+                    localStorage.setItem('newCatalogTitle', document.getElementById('newCatalogTitle').value.trim());
+                    localStorage.setItem('recommendationsToggle', document.getElementById('recommendationsToggle').checked ? 'true' : 'false');
+                    localStorage.setItem('recommendationsText', document.getElementById('recommendationsText').value.trim());
+                    localStorage.setItem('similarToggle', document.getElementById('similarToggle').checked ? 'true' : 'false');
+                    localStorage.setItem('similarText', document.getElementById('similarText').value.trim());
+
+                    const clientId = env.TRAKT_CLIENT_ID;
+                    const redirectUri = `${window.location.origin}/callback`;
+
+                    const traktAuthUrl = `https://trakt.tv/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+                    window.location.href = traktAuthUrl;
+                });
+                    document.getElementById('recommendationsToggle').addEventListener('change', function() {
+                        const recommendationsText = document.getElementById('recommendationsText');
+                        if (this.checked) {
+                            recommendationsText.style.display = 'block';
+                        } else {
+                            recommendationsText.style.display = 'none';
+                            recommendationsText.value = '';
+                        }
+                    });
+
+                    document.getElementById('similarToggle').addEventListener('change', function() {
+                        const similarText = document.getElementById('similarText');
+                        if (this.checked) {
+                            similarText.style.display = 'block';
+                        } else {
+                            similarText.style.display = 'none';
+                            similarText.value = '';
+                        }
+                    });
+            })
+            .catch(error => console.error('Error fetching environment variables:', error));
+
+            const logo = document.querySelector('.logo');
+            let logoClickCount = 0;
+            let countdownActive = false;
+
+            logo.addEventListener('click', () => {
+              if (!countdownActive) {
+                logoClickCount++;
+                if (logoClickCount >= 5) {
+                  startCountdown();
+                }
+              }
+            });
+
+            function startCountdown() {
+              const countdownImage = document.getElementById('countdownImage');
+              const addonContent = document.getElementById('addon');
+              countdownActive = true;
+              logoClickCount = 0;
+
+              addonContent.style.display = 'none'; 
+
+              countdownImage.style.display = 'none';
+              countdownImage.src = '';
+              countdownImage.src = '/assets/countdown.webp';
+              countdownImage.style.display = 'block';
+
+              setTimeout(() => {
+                countdownImage.style.display = 'none';
+                window.location.href = 'https://www.youtube.com/watch?v=GFq6wH5JR2A&t=43s';
+              }, 10000);
+            }
+
+            document.getElementById('recommendationsToggle').addEventListener('change', function() {
+              const recommendationsText = document.getElementById('recommendationsText');
+              if (this.checked) {
+                recommendationsText.style.display = 'block';
+              } else {
+                recommendationsText.style.display = 'none';
+                recommendationsText.value = '';
+              }
+            });
+
+            document.getElementById('similarToggle').addEventListener('change', function() {
+              const similarText = document.getElementById('similarText');
+              if (this.checked) {
+                similarText.style.display = 'block';
+              } else {
+                similarText.style.display = 'none';
+                similarText.value = '';
+              }
+            });
+        });
+        </script>
+  </body>
+</html>
